@@ -1,0 +1,63 @@
+---
+title: "The investigation of quality of weight lifting exercises"
+author: "Andrey Bondarenko"
+date: "26 Jul 2015"
+output: html_document
+---
+
+Necessary libraries
+-
+```{r}
+library(caret)
+```
+
+Data processing
+-
+Loading data:
+```{r}
+set.seed(79749)
+training <- read.csv(url('http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv'))
+testing  <- read.csv(url('http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv'))
+```
+
+
+There is a good function in the caret package that helps to remove variables with near zero variance:
+```{r}
+training <- training[, -nearZeroVar(training)]
+```
+
+Variables with many NA-values and id vector are also useless:
+```{r}
+NAs <- sapply(training, function(x) mean(is.na(x))) > 0.6
+training <- training[,NAs==FALSE]
+training <- training[c(-1)]
+```
+
+I divided given training data set into two additional parts:
+```{r}
+inTrain <- createDataPartition(y = training$classe, p = 0.6, list = FALSE)
+my_training <- training[inTrain,]
+my_testing  <- training[-inTrain,]
+```
+
+Model fitting
+-
+I used random forest model for given data, because it gave the best accuracy for prediction.
+```{r}
+modFit <- train(classe ~., method = "rf", data = my_training)
+```
+
+Generating confusion matrix:
+```{r}
+my_prediction <- predict(modFit, my_testing)
+confusionMatrix(my_prediction, my_testing$classe)
+```
+So, the model has very good accuracy and low out-of-sample error.
+
+
+
+
+
+
+
+
